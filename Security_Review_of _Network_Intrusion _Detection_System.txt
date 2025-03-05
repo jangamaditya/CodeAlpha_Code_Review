@@ -1,0 +1,43 @@
+Security Review of Network Intrusion Detection System (NIDS)
+
+Objective: Review the provided Python NIDS code for potential security vulnerabilities and recommend secure coding practices.
+
+Identified Security Concerns & Recommendations:
+
+  Raw Socket Usage:
+
+	Issue: The script uses raw sockets (socket.AF_PACKET), which require root privileges. Running scripts with elevated 	privileges increases the attack surface.
+
+	Recommendation: Use Linux capabilities (setcap) to limit privileges or libraries like scapy, which offer safer 	abstractions.
+
+  Unvalidated JSON Parsing:
+
+	Issue: The json.loads function directly parses log lines without validation, which can crash the script on malformed 	data.
+
+	Recommendation: Validate the JSON structure before parsing. Use try blocks to catch parsing errors and log invalid 	entries without disrupting execution.
+
+  Log File Growth:
+
+	Issue: Packets are continuously logged to a CSV file without size management.
+
+	Recommendation: You've added RotatingFileHandler — a great step! Ensure the log rotation settings match your expected 	traffic volume.
+
+  Log File Monitoring & Rotation:
+
+	Issue: The alert monitor tail-reads the log file but doesn’t handle file rotation (e.g., by Suricata).
+	
+	Recommendation: Use inotify or periodically check for file size and inode changes to handle rotation smoothly.
+
+  In-Memory Alert Counter:
+
+	Issue: The alert counter resets if the script is restarted.
+
+	Recommendation: Periodically persist the counter to disk or use lightweight storage like SQLite to maintain state 	across restarts.
+
+Suggested Improvements:
+
+	Rate Limiting for Alerts: Prevent excessive logging of repetitive alerts.
+
+	TLS Encryption: Encrypt logs if sent to external systems.
+
+	Input Sanitization: Sanitize all incoming data to mitigate injection attacks.
